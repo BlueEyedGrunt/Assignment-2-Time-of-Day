@@ -1,0 +1,18 @@
+Assignment Submission — Time-Based Dynamic Webpage
+
+Public URL: https://BlueEyedGrunt.github.io/Assignment-2-Time-of-Day/
+
+Files Included:
+- index.html
+- README.md
+- SUBMISSION.txt
+
+Overview of Functionality:
+- Displays student info (Brian O'Brien, major, COP4813 course, greeting).
+- JavaScript reads the local time and applies one of four background colors.
+- Includes test controls (buttons and a `?hour=` query parameter) to simulate different times.
+
+Known Issues / Assumptions:
+- Uses local device time.
+- Colors can be adjusted via CSS variables.
+- Deployed via GitHub Pages.
