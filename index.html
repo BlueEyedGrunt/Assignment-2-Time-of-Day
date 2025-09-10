@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Time-Aware Background — Brian O'Brien</title>
+  <style>
+    :root {
+      --morning: #FFF4CC;   /* soft warm */
+      --afternoon: #E6F7FF; /* light blue */
+      --evening: #FFE6E6;   /* soft pink */
+      --night: #0B1021;     /* deep navy */
+      --text-dark: #0f172a;
+      --text-light: #f8fafc;
+      --card-bg: rgba(255,255,255,0.7);
+      --card-text: #0b1220;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial, 'Apple Color Emoji','Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+    }
+    body {
+      display: grid;
+      place-items: center;
+      transition: background-color 600ms ease;
+      color: var(--text-dark);
+    }
+    .card {
+      width: min(720px, 94vw);
+      background: var(--card-bg);
+      backdrop-filter: blur(6px);
+      padding: 1.25rem 1.25rem 1rem;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    h1 { margin: 0 0 .5rem 0; font-size: clamp(1.4rem, 3.2vw, 2rem); }
+    .meta { margin: .25rem 0; line-height: 1.5; }
+    .badge { display: inline-block; padding:.2rem .55rem; border-radius: 999px; font-size: .8rem; border: 1px solid rgba(0,0,0,.15); background: rgba(255,255,255,.55);}
+    .row { display:flex; gap: .75rem; flex-wrap: wrap; align-items:center; }
+    .controls { margin-top: .75rem; display:flex; gap:.5rem; flex-wrap: wrap; }
+    button { padding: .5rem .75rem; border-radius: 10px; border: 1px solid rgba(0,0,0,.15); background: white; cursor:pointer; }
+    button:hover { filter: brightness(0.98); }
+    .footer { margin-top: .75rem; font-size:.9rem; opacity:.85; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:.5rem; }
+    @media (max-width:640px){ .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Welcome to my dynamic webpage!</h1>
+    <div class="grid">
+      <section>
+        <p class="meta"><strong>First & Last Name:</strong> Brian O'Brien</p>
+        <p class="meta"><strong>Course Name:</strong> COP4813</p>
+        <p class="meta"><strong>Major:</strong> Computer Science</p>
+        <p class="meta"><strong>Greeting:</strong> Hi there—this page changes color based on the current time of day.</p>
+      </section>
+      <section>
+        <div class="row">
+          <span class="badge" id="now"></span>
+          <span class="badge" id="range"></span>
+          <span class="badge" id="hex"></span>
+        </div>
+        <div class="controls">
+          <!-- Testing controls to simulate time-of-day without waiting -->
+          <button data-hour="8">Simulate Morning</button>
+          <button data-hour="13">Simulate Afternoon</button>
+          <button data-hour="19">Simulate Evening</button>
+          <button data-hour="23">Simulate Night</button>
+          <button id="reset">Reset (Use Real Time)</button>
+        </div>
+      </section>
+    </div>
+    <p class="footer">
+      Time windows — Morning: 06:00–12:00 · Afternoon: 12:00–18:00 · Evening: 18:00–21:00 · Night: 21:00–06:00.
+    </p>
+    <p class="footer">
+      Tip: add <code>?hour=19</code> to the URL to preview the evening theme instantly.
+    </p>
+  </main>
+
+  <script>
+    function themeForHour(h) {
+      if (h >= 6 && h < 12)  return { name: 'Morning',  color: getComputedStyle(document.documentElement).getPropertyValue('--morning').trim() };
+      if (h >= 12 && h < 18) return { name: 'Afternoon',color: getComputedStyle(document.documentElement).getPropertyValue('--afternoon').trim() };
+      if (h >= 18 && h < 21) return { name: 'Evening',  color: getComputedStyle(document.documentElement).getPropertyValue('--evening').trim() };
+      return { name: 'Night',    color: getComputedStyle(document.documentElement).getPropertyValue('--night').trim() };
+    }
+
+    const elNow = document.getElementById('now');
+    const elRange = document.getElementById('range');
+    const elHex = document.getElementById('hex');
+
+    const urlHour = new URLSearchParams(location.search).get('hour');
+    let simulatedHour = urlHour !== null ? Math.max(0, Math.min(23, parseInt(urlHour, 10))) : null;
+
+    function updateBackground() {
+      const now = new Date();
+      const hour = simulatedHour !== null ? simulatedHour : now.getHours();
+      const minute = now.getMinutes().toString().padStart(2,'0');
+
+      const t = themeForHour(hour);
+      document.body.style.backgroundColor = t.color;
+
+      const usingLightText = t.name === 'Night';
+      document.body.style.color = usingLightText ? getComputedStyle(document.documentElement).getPropertyValue('--text-light').trim() : getComputedStyle(document.documentElement).getPropertyValue('--text-dark').trim();
+      document.querySelector('.card').style.background = t.name === 'Night' ? 'rgba(255,255,255,0.10)' : 'var(--card-bg)';
+      document.querySelector('.card').style.color = t.name === 'Night' ? 'var(--text-light)' : 'var(--card-text)';
+
+      elNow.textContent = `Local time: ${String(hour).padStart(2,'0')}:${minute}`;
+      elRange.textContent = `Theme: ${t.name}`;
+      elHex.textContent = `Background: ${t.color}`;
+    }
+
+    setInterval(() => { if (simulatedHour === null) updateBackground(); }, 60 * 1000);
+    updateBackground();
+
+    document.querySelectorAll('button[data-hour]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        simulatedHour = parseInt(btn.dataset.hour, 10);
+        updateBackground();
+      });
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      simulatedHour = null;
+      updateBackground();
+    });
+  </script>
+</body>
+</html>
